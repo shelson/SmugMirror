@@ -6,10 +6,8 @@ import smugpy
 import shutil
 import getpass
 import requests
+import ConfigParser
 
-SCRIPT_NAME = 'SmugMirror'
-API_KEY = '<enter api key here>'
-RESTORE_PATH="./restore"
 
 def downloadImage(url, destFile):
     sys.stdout.write("Downloading: %s.... " % url)
@@ -23,13 +21,34 @@ def downloadImage(url, destFile):
     print "Done."
     sys.stdout.flush()
 
+# baked-in defaults
+SCRIPT_NAME = 'SmugMirror'
+API_KEY = '<enter api key here>'
+RESTORE_PATH="./restore"
+USER_NAME = ""
+
+# Check for .smugmirror, read data from there if it exists
+config = ConfigParser.RawConfigParser()
+try:
+    config.read(os.path.join(os.path.expanduser('~'), '.smugmirror'))
+except:
+    print "No .smugmirror file found in home dir, using script defaults"
+    pass
+else:
+    SCRIPT_NAME = config.get('main', 'script_name')
+    API_KEY = config.get('main', 'api_key')
+    RESTORE_PATH = config.get('main', 'restore_path')
+    USER_NAME = config.get('main', 'user_name')
+    PASSWORD = config.get('main', 'password')
+
+if USER_NAME == "":
+    # signon
+    USER_NAME = raw_input('Email address: ')
+    PASSWORD = getpass.getpass('Password: ')
 
 # using the old API (1.2.2), which is easier to use for one shot scripts (avoids OAuth)
 smugmug = smugpy.SmugMug(api_key=API_KEY, api_version="1.2.2", app_name=SCRIPT_NAME)
 
-# signon
-USER_NAME = raw_input('Email address: ')
-PASSWORD = getpass.getpass('Password: ')
 smugmug.login_withPassword(EmailAddress=USER_NAME, Password=PASSWORD)
 
 # Get all albums
