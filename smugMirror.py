@@ -8,18 +8,12 @@ import getpass
 import requests
 import ConfigParser
 
-
 def downloadImage(url, destFile):
-    sys.stdout.write("Downloading: %s.... " % url)
-    sys.stdout.flush()
-
     response = requests.get(url, stream=True)
     with open(destFile, 'wb') as out_file:
         shutil.copyfileobj(response.raw, out_file)
     del response
 
-    print "Done."
-    sys.stdout.flush()
 
 # baked-in defaults
 SCRIPT_NAME = 'SmugMirror'
@@ -88,7 +82,10 @@ for album in albums['Albums']:
         try:
             fstats = os.stat(destFile)
         except:
+            print "Downloading %s..." % destFile,
+            sys.stdout.flush()
             downloadImage(urls['Image']['OriginalURL'], destFile)
+            print "Done."
         else:
             if fstats.st_size == imgSize:
                 print "%s already exists, skipping" % destFile
