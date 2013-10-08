@@ -8,11 +8,15 @@ import getpass
 import requests
 import ConfigParser
 
-def downloadImage(url, destFile):
-    response = requests.get(url, stream=True)
-    with open(destFile, 'wb') as out_file:
-        shutil.copyfileobj(response.raw, out_file)
-    del response
+class ImageDownloader:
+    def __init__(self):
+        self.s = requests.Session()
+
+    def getImage(self, url, destFile):
+        response = self.s.get(url, stream=True)
+        with open(destFile, 'wb') as out_file:
+            shutil.copyfileobj(response.raw, out_file)
+        del response
 
 
 # baked-in defaults
@@ -50,6 +54,9 @@ albums = smugmug.albums_get()
 
 # Work through albums, listing category / album name
 
+# Create an instance of our downloader class, this means we can use keep-alives
+id = ImageDownloader()
+
 for album in albums['Albums']:
     print "About to download the contents of %s" % album['Title']
 
@@ -84,7 +91,7 @@ for album in albums['Albums']:
         except:
             print "Downloading %s..." % destFile,
             sys.stdout.flush()
-            downloadImage(urls['Image']['OriginalURL'], destFile)
+            id.getImage(urls['Image']['OriginalURL'], destFile)
             print "Done."
         else:
             if fstats.st_size == imgSize:
