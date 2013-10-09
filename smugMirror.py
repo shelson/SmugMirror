@@ -71,12 +71,28 @@ for album in albums['Albums']:
 
     images = smugmug.images_get(AlbumID=album['id'], AlbumKey=album['Key'])
 
+    filesSeen = []
+
     for image in images['Album']['Images']:
         print "[image: %s] [info]" % image['id'],
         sys.stdout.flush()
         info = smugmug.images_getInfo(ImageID=image['id'], ImageKey=image['Key'])
         imgSize = info['Image']['Size']
         imgName = info['Image']['FileName']
+        
+        imgPrefix = ""
+
+        if filesSeen.count(imgName) > 0:
+            # add it to the list before we mangle it's name in case there are
+            # more occurrences!
+            filesSeen.append(imgName)
+            # make up a name for this image using some logic
+            tmpName = ".".join(imgName.split('.')[:-1])
+            tmpExt = imgName.split('.')[-1]
+            imgName = "".join([tmpName, "_", str(filesSeen.count(imgName) - 1), ".", tmpExt])
+        else:
+            # simply append it to the list
+            filesSeen.append(imgName)
 
         destFile = os.path.join(destPath, imgName)
 
@@ -102,9 +118,9 @@ for album in albums['Albums']:
             sys.stdout.flush()
             urls = smugmug.images_getURLs(ImageID=image['id'], ImageKey=image['Key'])
 
-            print "Downloading %s..." % destFile,
+            print "Downloading %s to %s..." % (info['Image']['OriginalURL'], destFile),
             sys.stdout.flush()
-            id.getImage(urls['Image']['OriginalURL'], destFile)
+            #id.getImage(urls['Image']['OriginalURL'], destFile)
             print "Done."
 
 
