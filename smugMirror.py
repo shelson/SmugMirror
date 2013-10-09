@@ -76,28 +76,35 @@ for album in albums['Albums']:
         sys.stdout.flush()
         info = smugmug.images_getInfo(ImageID=image['id'], ImageKey=image['Key'])
         imgSize = info['Image']['Size']
-        print "[urls] ",
-        sys.stdout.flush()
-        urls = smugmug.images_getURLs(ImageID=image['id'], ImageKey=image['Key'])
-        # download image
-        imgName = urls['Image']['OriginalURL'].split('/')[-1]
+        imgName = info['Image']['FileName']
 
         destFile = os.path.join(destPath, imgName)
 
-        # we need the file size, so we can use exceptions to see if
-        # it also exists ;-)
+        # in the interests of saving an API call, check if the output filename
+        # exists now, since if it does and the size matches we don't need to 
+        # ask the API for the download URL.
+
+        needsDownloading = False
+
         try:
             fstats = os.stat(destFile)
         except:
-            print "Downloading %s..." % destFile,
-            sys.stdout.flush()
-            id.getImage(urls['Image']['OriginalURL'], destFile)
-            print "Done."
+            needsDownloading = True
         else:
             if fstats.st_size == imgSize:
                 print "%s already exists, skipping" % destFile
             else:
                 print "%s doesn't match file size, re-downloading" % destFile
-                downloadImage(urls['Image']['OriginalURL'], destFile)
+                needsDownloading = True
+
+        if needsDownloading:
+            print "[urls] ",
+            sys.stdout.flush()
+            urls = smugmug.images_getURLs(ImageID=image['id'], ImageKey=image['Key'])
+
+            print "Downloading %s..." % destFile,
+            sys.stdout.flush()
+            id.getImage(urls['Image']['OriginalURL'], destFile)
+            print "Done."
 
 
