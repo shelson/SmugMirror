@@ -2,11 +2,22 @@
 
 import os
 import sys
+import Queue
 import smugpy
 import shutil
 import getpass
 import requests
+import threading
 import ConfigParser
+
+# baked-in defaults
+SCRIPT_NAME = 'SmugMirror'
+API_KEY = '<enter api key here>'
+RESTORE_PATH="./restore"
+USER_NAME = ""
+
+# number of albums to try and fetch at once
+THREADS = "2"
 
 class ImageDownloader:
     def __init__(self):
@@ -19,11 +30,7 @@ class ImageDownloader:
         del response
 
 
-# baked-in defaults
-SCRIPT_NAME = 'SmugMirror'
-API_KEY = '<enter api key here>'
-RESTORE_PATH="./restore"
-USER_NAME = ""
+
 
 # Check for .smugmirror, read data from there if it exists
 config = ConfigParser.RawConfigParser()
@@ -47,10 +54,20 @@ if USER_NAME == "":
 # using the old API (1.2.2), which is easier to use for one shot scripts (avoids OAuth)
 smugmug = smugpy.SmugMug(api_key=API_KEY, api_version="1.2.2", app_name=SCRIPT_NAME)
 
-smugmug.login_withPassword(EmailAddress=USER_NAME, Password=PASSWORD)
+try:
+    smugmug.login_withPassword(EmailAddress=USER_NAME, Password=PASSWORD)
+except smugpy.SmugMugException, e:
+    print "Failed to log in, check the error below and sort it out!"
+    print e.message
+    sys.exit(1)
 
 # Get all albums
-albums = smugmug.albums_get()
+try:
+    albums = smugmug.albums_get()
+except Exception, e:
+    print "Couldn't get the list of albums, this isn't going to end well."
+    print e.message
+    sys.exit(1)
 
 # Work through albums, listing category / album name
 
@@ -65,6 +82,7 @@ for album in albums['Albums']:
     try:
         os.makedirs(destPath)
     except OSError, e:
+        # if the directory exists (errno 17) ignore it, else bail
         if e.errno != 17:
             print e
             sys.exit(1)
