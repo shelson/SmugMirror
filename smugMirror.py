@@ -35,9 +35,11 @@ if __name__ == "__main__":
     id = ImageDownloader()
 
     for album in albums:
+        info = get_album_info(album['AlbumKey'])
+
         print("About to download the contents of %s" % album['Title'])
 
-        destPath = os.path.join(RESTORE_PATH, album['Category'], album['Title'])
+        destPath = os.path.join(RESTORE_PATH, info['category_name'], album['Title'])
 
         try:
             os.makedirs(destPath)
