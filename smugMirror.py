@@ -16,7 +16,7 @@ class ImageDownloader:
             shutil.copyfileobj(response.raw, out_file)
         del response
 
-RESTORE_PATH="./restore"
+RESTORE_PATH=os.environ["RESTORE_PATH"]
 
 if __name__ == "__main__":
     sm = SmugMug()
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     id = ImageDownloader()
 
     for album in albums:
-        info = get_album_info(album['AlbumKey'])
+        info = sm.get_album_info(album['AlbumKey'])
 
         print("About to download the contents of %s" % album['Title'])
 
